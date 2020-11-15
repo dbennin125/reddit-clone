@@ -1,0 +1,37 @@
+{
+  "name": "notreddit-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "watch": "tsc -w",
+    "dev": "nodemon dist/index.js",
+    "startTs": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "devTs": "nodemon --exec ts-node src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mikro-orm/cli": "^4.3.0",
+    "@mikro-orm/core": "^4.3.0",
+    "@mikro-orm/migrations": "^4.3.0",
+    "@mikro-orm/postgresql": "^4.3.0",
+    "@types/node": "^14.14.7",
+    "dotenv": "^8.2.0",
+    "pg": "^8.5.1"
+  },
+  "mikro-orm": {
+    "useTsNode": true,
+    "configPaths": [
+      "./src/mikro-orm.config.ts",
+      "./dist/mikro-orm.config.js"
+    ]
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.5"
+  }
+}
