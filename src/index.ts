@@ -1,19 +1,25 @@
 import { MikroORM } from "@mikro-orm/core";
 import { __pg__password__, __pg__user__, __prod__ } from "./constants";
-import { Post } from "./entities/Post"
 import mikroConfig from "./mikro-orm.config"
+import express from 'express';
 
+
+const PORT = process.env.PORT || 5040;
+const app = express();
 
 const main = async () => {
 
     const orm = await MikroORM.init(mikroConfig);
     await orm.getMigrator().up();
 
-    // const post = orm.em.create(Post, {title: `it's alive!`});
-    // await orm.em.persistAndFlush(post);
+    app.get('/', (_, res) => {
+        res.send('are you listening?')
+    })
 
-    const posts = await orm.em.find(Post, {})
-    console.log(posts)
+    app.listen(PORT, () => {
+        console.log(`listening on ${PORT}`)
+    })
+
 }
 
 main().catch(err => {
