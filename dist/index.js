@@ -20,6 +20,7 @@ const first_1 = require("./resolvers/first");
 const mikro_orm_config_1 = __importDefault(require("./mikro-orm.config"));
 const core_1 = require("@mikro-orm/core");
 const post_1 = require("./resolvers/post");
+const user_1 = require("./resolvers/user");
 const PORT = process.env.PORT || 5040;
 const app = express_1.default();
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -27,7 +28,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     yield orm.getMigrator().up();
     const apolloServer = new apollo_server_express_1.ApolloServer({
         schema: yield type_graphql_1.buildSchema({
-            resolvers: [first_1.FirstResolverEver, post_1.PostResolver],
+            resolvers: [first_1.FirstResolverEver, post_1.PostResolver, user_1.UserResolver],
             validate: false,
         }),
         context: () => ({ em: orm.em }),

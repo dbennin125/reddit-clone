@@ -1,8 +1,6 @@
 import { Post } from "../entities/Post";
 import { MyContext } from "../types";
 import { Arg, Ctx, Int, Mutation, Query, Resolver } from "type-graphql";
-import { PromiseOrValue } from "graphql/jsutils/PromiseOrValue";
-import { type } from "os";
 
 @Resolver()
 export class PostResolver {
@@ -51,7 +49,11 @@ export class PostResolver {
     @Arg("postId", () => Int) id: number,
     @Ctx() { em }: MyContext
   ): Promise<Boolean> {
-    await em.nativeDelete(Post, { id });
-    return true;
+    try {
+      await em.nativeDelete(Post, { id });
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

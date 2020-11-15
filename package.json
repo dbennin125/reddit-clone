@@ -8,7 +8,8 @@
     "dev": "nodemon dist/index.js",
     "startTs": "ts-node src/index.ts",
     "start": "node dist/index.js",
-    "devTs": "nodemon --exec ts-node src/index.ts"
+    "devTs": "nodemon --exec ts-node src/index.ts",
+    "createdb:migration": "mikro-orm migration:create"
   },
   "keywords": [],
   "author": "",
@@ -25,7 +26,9 @@
     "@mikro-orm/core": "^4.0.0-alpha.0",
     "@mikro-orm/migrations": "^4.0.0-alpha.0",
     "@mikro-orm/postgresql": "^4.0.0-alpha.0",
+    "@types/bcryptjs": "^2.4.2",
     "apollo-server-express": "^2.16.1",
+    "bcryptjs": "^2.4.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "graphql": "^15.3.0",
