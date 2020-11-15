@@ -12,22 +12,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const core_1 = require("@mikro-orm/core");
-const mikro_orm_config_1 = __importDefault(require("./mikro-orm.config"));
+require("reflect-metadata");
+const apollo_server_express_1 = require("apollo-server-express");
+const type_graphql_1 = require("type-graphql");
 const express_1 = __importDefault(require("express"));
+const first_1 = require("./resolvers/first");
+const mikro_orm_config_1 = __importDefault(require("./mikro-orm.config"));
+const core_1 = require("@mikro-orm/core");
+const post_1 = require("./resolvers/post");
 const PORT = process.env.PORT || 5040;
 const app = express_1.default();
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const orm = yield core_1.MikroORM.init(mikro_orm_config_1.default);
     yield orm.getMigrator().up();
-    app.get('/', (_, res) => {
-        res.send('are you listening?');
+    const apolloServer = new apollo_server_express_1.ApolloServer({
+        schema: yield type_graphql_1.buildSchema({
+            resolvers: [first_1.FirstResolverEver, post_1.PostResolver],
+            validate: false,
+        }),
+        context: () => ({ em: orm.em }),
     });
+    apolloServer.applyMiddleware({ app });
     app.listen(PORT, () => {
         console.log(`listening on ${PORT}`);
     });
 });
-main().catch(err => {
+main().catch((err) => {
     console.error(err);
 });
 //# sourceMappingURL=index.js.map
