@@ -1,6 +1,3 @@
-require("dotenv").config();
-
-import { User } from "../entities/User";
 import {
   Arg,
   Ctx,
@@ -11,7 +8,9 @@ import {
   Resolver,
 } from "type-graphql";
 import bcryptjs from "bcryptjs";
-import { MyContext } from "src/types";
+import { MyContext } from "../types";
+import { salt_rounds } from "../constants";
+import { User } from "../entities/User";
 
 @InputType()
 class UserNamePasswordInput {
@@ -19,6 +18,15 @@ class UserNamePasswordInput {
   username: string;
   @Field()
   email?: string;
+  @Field()
+  password: string;
+}
+
+@InputType()
+class UserLoginInput {
+  @Field()
+  username: string;
+
   @Field()
   password: string;
 }
@@ -42,34 +50,68 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
-  @Mutation(() => User)
+  @Mutation(() => UserResponse)
   async register(
     @Arg("userInput", () => UserNamePasswordInput)
     userInput: UserNamePasswordInput,
     @Ctx() { em }: MyContext
-  ) {
-    const hashedPassword = await bcryptjs.hash(
-      userInput.password,
-      Number(process.env.SALT_ROUNDS) || 15
-    );
+  ): Promise<UserResponse> {
+    if (userInput.username.length <= 2) {
+      return {
+        errors: [
+          {
+            field: "username",
+            message: "Username must be longer than 2 characters",
+          },
+        ],
+      };
+    }
+
+    if (userInput.password.length <= 2) {
+      return {
+        errors: [
+          {
+            field: "password",
+            message: "Password must be longer than 2 characters",
+          },
+        ],
+      };
+    }
+    const hashedPassword = await bcryptjs.hash(userInput.password, salt_rounds);
     const user = em.create(User, {
       username: userInput.username.toLowerCase(),
       email: userInput.email,
       password: hashedPassword,
     });
-    await em.persistAndFlush(user);
-    return user;
+    try {
+      await em.persistAndFlush(user);
+    } catch (err) {
+      //console.error states a 23505 is a duplicate username
+      if (err.code === "23505" || err.detail.includes("already exists")) {
+        return {
+          errors: [
+            {
+              field: "username/email",
+              message: "Please choose another username or email.",
+            },
+          ],
+        };
+      }
+      console.error("error:", err.message);
+    }
+    return { user };
   }
 
   @Mutation(() => UserResponse)
   async login(
-    @Arg("userInput", () => UserNamePasswordInput)
-    userInput: UserNamePasswordInput,
+    @Arg("userInput", () => UserLoginInput)
+    userInput: UserLoginInput,
     @Ctx() { em }: MyContext
   ): Promise<UserResponse> {
     const user = await em.findOne(User, {
       username: userInput.username.toLowerCase(),
     });
+
     if (!user) {
       return {
         errors: [
@@ -85,6 +127,7 @@ export class UserResolver {
       userInput.password,
       user.password
     );
+
     if (!verifiedPassword) {
       return {
         errors: [
@@ -95,8 +138,6 @@ export class UserResolver {
         ],
       };
     }
-    return {
-      user,
-    };
+    return { user };
   }
 }

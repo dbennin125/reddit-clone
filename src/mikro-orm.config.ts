@@ -1,8 +1,9 @@
 import {
   __prod__,
-  __pg__password__,
-  __pg__user__,
   __dbName__,
+  __db_type__,
+  __password__,
+  __user__,
 } from "./constants";
 import { Post } from "./entities/Post";
 import { MikroORM } from "@mikro-orm/core";
@@ -17,9 +18,9 @@ export default {
   },
   entities: [Post, User],
   dbName: __dbName__,
-  user: __pg__user__,
-  password: __pg__password__,
-  type: "postgresql",
+  user: __user__,
+  password: __password__,
+  type: __db_type__,
   driver: PostgreSqlDriver,
   debug: !__prod__,
 } as Parameters<typeof MikroORM.init>[0];

@@ -15,9 +15,9 @@ exports.default = {
     },
     entities: [Post_1.Post, User_1.User],
     dbName: constants_1.__dbName__,
-    user: constants_1.__pg__user__,
-    password: constants_1.__pg__password__,
-    type: "postgresql",
+    user: constants_1.__user__,
+    password: constants_1.__password__,
+    type: constants_1.__db_type__,
     driver: postgresql_1.PostgreSqlDriver,
     debug: !constants_1.__prod__,
 };

@@ -19,9 +19,9 @@ const express_1 = __importDefault(require("express"));
 const first_1 = require("./resolvers/first");
 const mikro_orm_config_1 = __importDefault(require("./mikro-orm.config"));
 const core_1 = require("@mikro-orm/core");
+const constants_1 = require("./constants");
 const post_1 = require("./resolvers/post");
 const user_1 = require("./resolvers/user");
-const PORT = process.env.PORT || 5040;
 const app = express_1.default();
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const orm = yield core_1.MikroORM.init(mikro_orm_config_1.default);
@@ -34,11 +34,9 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         context: () => ({ em: orm.em }),
     });
     apolloServer.applyMiddleware({ app });
-    app.listen(PORT, () => {
-        console.log(`listening on ${PORT}`);
+    app.listen(constants_1.PORT, () => {
+        console.log(`listening on ${constants_1.PORT}`);
     });
 });
-main().catch((err) => {
-    console.error(err);
-});
+main().catch().then(console.log);
 //# sourceMappingURL=index.js.map

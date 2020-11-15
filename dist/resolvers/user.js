@@ -25,10 +25,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserResolver = void 0;
-require("dotenv").config();
-const User_1 = require("../entities/User");
 const type_graphql_1 = require("type-graphql");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const constants_1 = require("../constants");
+const User_1 = require("../entities/User");
 let UserNamePasswordInput = class UserNamePasswordInput {
 };
 __decorate([
@@ -46,6 +46,19 @@ __decorate([
 UserNamePasswordInput = __decorate([
     type_graphql_1.InputType()
 ], UserNamePasswordInput);
+let UserLoginInput = class UserLoginInput {
+};
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", String)
+], UserLoginInput.prototype, "username", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", String)
+], UserLoginInput.prototype, "password", void 0);
+UserLoginInput = __decorate([
+    type_graphql_1.InputType()
+], UserLoginInput);
 let UserFieldError = class UserFieldError {
 };
 __decorate([
@@ -75,14 +88,49 @@ UserResponse = __decorate([
 let UserResolver = class UserResolver {
     register(userInput, { em }) {
         return __awaiter(this, void 0, void 0, function* () {
-            const hashedPassword = yield bcryptjs_1.default.hash(userInput.password, Number(process.env.SALT_ROUNDS) || 15);
+            if (userInput.username.length <= 2) {
+                return {
+                    errors: [
+                        {
+                            field: "username",
+                            message: "Username must be longer than 2 characters",
+                        },
+                    ],
+                };
+            }
+            if (userInput.password.length <= 2) {
+                return {
+                    errors: [
+                        {
+                            field: "password",
+                            message: "Password must be longer than 2 characters",
+                        },
+                    ],
+                };
+            }
+            const hashedPassword = yield bcryptjs_1.default.hash(userInput.password, constants_1.salt_rounds);
             const user = em.create(User_1.User, {
                 username: userInput.username.toLowerCase(),
                 email: userInput.email,
                 password: hashedPassword,
             });
-            yield em.persistAndFlush(user);
-            return user;
+            try {
+                yield em.persistAndFlush(user);
+            }
+            catch (err) {
+                if (err.code === "23505" || err.detail.includes("already exists")) {
+                    return {
+                        errors: [
+                            {
+                                field: "username/email",
+                                message: "Please choose another username or email.",
+                            },
+                        ],
+                    };
+                }
+                console.error("error:", err.message);
+            }
+            return { user };
         });
     }
     login(userInput, { em }) {
@@ -111,14 +159,12 @@ let UserResolver = class UserResolver {
                     ],
                 };
             }
-            return {
-                user,
-            };
+            return { user };
         });
     }
 };
 __decorate([
-    type_graphql_1.Mutation(() => User_1.User),
+    type_graphql_1.Mutation(() => UserResponse),
     __param(0, type_graphql_1.Arg("userInput", () => UserNamePasswordInput)),
     __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
@@ -127,10 +173,10 @@ __decorate([
 ], UserResolver.prototype, "register", null);
 __decorate([
     type_graphql_1.Mutation(() => UserResponse),
-    __param(0, type_graphql_1.Arg("userInput", () => UserNamePasswordInput)),
+    __param(0, type_graphql_1.Arg("userInput", () => UserLoginInput)),
     __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [UserNamePasswordInput, Object]),
+    __metadata("design:paramtypes", [UserLoginInput, Object]),
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "login", null);
 UserResolver = __decorate([
