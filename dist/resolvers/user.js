@@ -29,6 +29,7 @@ const type_graphql_1 = require("type-graphql");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const constants_1 = require("../constants");
 const User_1 = require("../entities/User");
+const typeorm_1 = require("typeorm");
 let UserNamePasswordInput = class UserNamePasswordInput {
 };
 __decorate([
@@ -46,19 +47,6 @@ __decorate([
 UserNamePasswordInput = __decorate([
     type_graphql_1.InputType()
 ], UserNamePasswordInput);
-let UserLoginInput = class UserLoginInput {
-};
-__decorate([
-    type_graphql_1.Field(),
-    __metadata("design:type", String)
-], UserLoginInput.prototype, "username", void 0);
-__decorate([
-    type_graphql_1.Field(),
-    __metadata("design:type", String)
-], UserLoginInput.prototype, "password", void 0);
-UserLoginInput = __decorate([
-    type_graphql_1.InputType()
-], UserLoginInput);
 let UserFieldError = class UserFieldError {
 };
 __decorate([
@@ -86,7 +74,7 @@ UserResponse = __decorate([
     type_graphql_1.ObjectType()
 ], UserResponse);
 let UserResolver = class UserResolver {
-    register(userInput, { em }) {
+    register(userInput) {
         return __awaiter(this, void 0, void 0, function* () {
             if (userInput.username.length <= 2) {
                 return {
@@ -109,13 +97,20 @@ let UserResolver = class UserResolver {
                 };
             }
             const hashedPassword = yield bcryptjs_1.default.hash(userInput.password, constants_1.salt_rounds);
-            const user = em.create(User_1.User, {
-                username: userInput.username.toLowerCase(),
-                email: userInput.email,
-                password: hashedPassword,
-            });
+            let user;
             try {
-                yield em.persistAndFlush(user);
+                const resultRowArray = yield typeorm_1.getConnection()
+                    .createQueryBuilder()
+                    .insert()
+                    .into(User_1.User)
+                    .values({
+                    username: userInput.username.toLowerCase(),
+                    email: userInput.email,
+                    password: hashedPassword,
+                })
+                    .returning("*")
+                    .execute();
+                user = resultRowArray.raw[0];
             }
             catch (err) {
                 if (err.code === "23505" || err.detail.includes("already exists")) {
@@ -133,11 +128,11 @@ let UserResolver = class UserResolver {
             return { user };
         });
     }
-    login(userInput, { em }) {
+    login(usernameOrEmail, password) {
         return __awaiter(this, void 0, void 0, function* () {
-            const user = yield em.findOne(User_1.User, {
-                username: userInput.username.toLowerCase(),
-            });
+            const user = yield User_1.User.findOne(usernameOrEmail.includes("@")
+                ? { where: { email: usernameOrEmail } }
+                : { where: { username: usernameOrEmail } });
             if (!user) {
                 return {
                     errors: [
@@ -148,7 +143,7 @@ let UserResolver = class UserResolver {
                     ],
                 };
             }
-            const verifiedPassword = yield bcryptjs_1.default.compare(userInput.password, user.password);
+            const verifiedPassword = yield bcryptjs_1.default.compare(password, user.password);
             if (!verifiedPassword) {
                 return {
                     errors: [
@@ -166,17 +161,16 @@ let UserResolver = class UserResolver {
 __decorate([
     type_graphql_1.Mutation(() => UserResponse),
     __param(0, type_graphql_1.Arg("userInput", () => UserNamePasswordInput)),
-    __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [UserNamePasswordInput, Object]),
+    __metadata("design:paramtypes", [UserNamePasswordInput]),
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "register", null);
 __decorate([
     type_graphql_1.Mutation(() => UserResponse),
-    __param(0, type_graphql_1.Arg("userInput", () => UserLoginInput)),
-    __param(1, type_graphql_1.Ctx()),
+    __param(0, type_graphql_1.Arg("usernameOrEmail")),
+    __param(1, type_graphql_1.Arg("password")),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [UserLoginInput, Object]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "login", null);
 UserResolver = __decorate([
