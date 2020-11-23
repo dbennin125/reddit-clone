@@ -1,14 +1,15 @@
 import {
   Arg,
-  // Ctx,
+  Ctx,
   Field,
   InputType,
   Mutation,
   ObjectType,
+  Query,
   Resolver,
 } from "type-graphql";
 import bcryptjs from "bcryptjs";
-// import { MyContext } from "../types";
+import { MyContext } from "../types";
 import { salt_rounds } from "../constants";
 import { User } from "../entities/User";
 import { getConnection } from "typeorm";
@@ -42,11 +43,20 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+  @Query(() => User, { nullable: true })
+  async check(@Ctx() { req }: MyContext) {
+    if (!req.session.userId) {
+      return null;
+    }
+    const user = await User.findOne({ where: { id: req.session.userId } });
+    return user;
+  }
+
   @Mutation(() => UserResponse)
   async register(
     @Arg("userInput", () => UserNamePasswordInput)
-    userInput: UserNamePasswordInput
-    // @Ctx() { req }: MyContext
+    userInput: UserNamePasswordInput,
+    @Ctx() { req }: MyContext
   ): Promise<UserResponse> {
     if (userInput.username.length <= 2) {
       return {
@@ -105,14 +115,16 @@ export class UserResolver {
       }
       console.error("error:", err.message);
     }
+
+    req.session.userId = user.id;
     return { user };
   }
 
   @Mutation(() => UserResponse)
   async login(
     @Arg("usernameOrEmail") usernameOrEmail: string,
-    @Arg("password") password: string
-    // @Ctx() { req }: MyContext
+    @Arg("password") password: string,
+    @Ctx() { req }: MyContext
   ): Promise<UserResponse> {
     const user = await User.findOne(
       usernameOrEmail.includes("@")
@@ -143,6 +155,9 @@ export class UserResolver {
         ],
       };
     }
+
+    req.session.userId = user.id;
+
     return { user };
   }
 }

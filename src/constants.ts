@@ -8,8 +8,12 @@ export const __user__ = process.env.PG_USER;
 
 export const __dbName__: string | undefined = process.env.NEW_DB_NAME;
 
+export const __testDB__ = process.env.NEW_JEST_DB;
+
 export const __db_type__ = process.env.NEW_DB_TYPE;
 
 export const salt_rounds = Number(process.env.SALT_ROUNDS) || 15;
 
 export const PORT = process.env.PORT || 5040;
+
+export const secret = String(process.env.APP_SECRET);
