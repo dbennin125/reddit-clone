@@ -31,6 +31,10 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const app = express_1.default();
     const RedisStore = connect_redis_1.default(express_session_1.default);
     const redisClient = redis_1.default.createClient();
+    app.use(require("cors")({
+        origin: true,
+        credentials: true,
+    }));
     app.use(express_session_1.default({
         name: "nerf",
         store: new RedisStore({
@@ -55,7 +59,10 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         }),
         context: ({ req, res }) => ({ req, res }),
     });
-    apolloServer.applyMiddleware({ app, cors: false });
+    apolloServer.applyMiddleware({
+        app,
+        cors: false,
+    });
     app.listen(constants_1.PORT, () => {
         console.log(`listening on ${constants_1.PORT}`);
     });

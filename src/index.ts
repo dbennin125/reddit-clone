@@ -26,6 +26,13 @@ const main = async () => {
   const redisClient = redis.createClient();
 
   app.use(
+    require("cors")({
+      origin: true,
+      credentials: true,
+    })
+  );
+
+  app.use(
     session({
       name: "nerf",
       store: new RedisStore({
@@ -52,7 +59,10 @@ const main = async () => {
     context: ({ req, res }): MyContext => ({ req, res }),
   });
 
-  apolloServer.applyMiddleware({ app, cors: false });
+  apolloServer.applyMiddleware({
+    app,
+    cors: false,
+  });
   // app.get('/', (_, res) => {
   //     res.send('are you listening?')
   // })
