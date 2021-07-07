@@ -10,7 +10,7 @@ import {
 
 @ObjectType()
 @Entity()
-export class Post extends BaseEntity {
+export class User extends BaseEntity {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
   id!: number;
@@ -24,6 +24,13 @@ export class Post extends BaseEntity {
   updatedAt: Date;
 
   @Field()
-  @Column({ type: "text" })
-  title!: string;
+  @Column({ unique: true })
+  username!: string;
+
+  @Field()
+  @Column({ unique: true })
+  email?: string;
+
+  @Column()
+  password!: string;
 }
